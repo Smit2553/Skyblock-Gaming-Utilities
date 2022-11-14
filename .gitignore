@@ -3,3 +3,5 @@
 /test.py
 /.idea/
 *.sqlite
+__pycache__/*
+cogs/__pycache__

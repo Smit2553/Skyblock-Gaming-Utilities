@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from discord.commands import SlashCommandGroup
 import requests_cache
 import sqlite3
-
-
+from functions import *
+import aiosqlite
 class ScammerCheck(commands.Cog):
 
     def __init__(self, bot):
@@ -28,24 +28,17 @@ class ScammerCheck(commands.Cog):
         required=True
     )
     async def lookup(self, ctx, player):
-        mojangresponse = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{player}')
-        try:
-            uuid = mojangresponse.json()['id']
-            print(uuid)
-        except Exception as err:
-            print(err)
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Recheck the spelling of your '
-                                              'IGN',
-                                  colour=0xFF0000)
-            await ctx.respond(embed=embed)
+        mojangresponse = await ign_to_uuid(player)
+        if type(mojangresponse) is discord.Embed:
+            await ctx.respond(embed=mojangresponse)
             return
+        uuid = mojangresponse["id"]
         conn = sqlite3.connect('SGScammer.sqlite')
         c = conn.cursor()
         c.execute(f"SELECT * FROM sgscammerdb WHERE minecraftuuid = '{uuid}' AND discord_guild_id = '{ctx.guild.id}'")
         if c.fetchone() is not None:
             embed = discord.Embed(title=f'Scammer Check',
-                                  description=f'**{mojangresponse.json()["name"]}** is a in the server specific '
+                                  description=f'**{uuid["name"]}** is a in the server specific '
                                               f'blacklist. \n To remove them use /scammer '
                                               f'whitelist', colour=0xFF0000)
             embed.set_thumbnail(url=f'https://crafatar.com/renders/head/{uuid}')

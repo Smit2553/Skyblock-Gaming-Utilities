@@ -1,10 +1,10 @@
 import os
-import sqlite3
 import discord
 import requests
 from discord.ext import commands
 from discord import option
 import aiosqlite
+from functions import *
 
 
 class Verify(commands.Cog):
@@ -25,8 +25,6 @@ class Verify(commands.Cog):
             )
             await ctx.respond(embed=embed)
             return
-        conn = sqlite3.connect('SGdatabase.sqlite')
-        c = conn.cursor()
         if minecraft_ign is None:
             embed = discord.Embed(title=f'Error', description='Please enter a user \n `-verify ObbyTrusty`',
                                   colour=0xFF0000)
@@ -34,18 +32,12 @@ class Verify(commands.Cog):
             return
         tempvar = "Attempt to verify: " + str(ctx.author)
         print(tempvar)
-        response = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{minecraft_ign}')
-        try:
-            uuid = response.json()['id']
-            print(uuid)
-        except Exception as err:
-            print(err)
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Recheck the spelling of your '
-                                              'IGN',
-                                  colour=0xFF0000)
-            await ctx.respond(embed=embed)
+        uuid = await ign_to_uuid(minecraft_ign)
+        if type(uuid) is discord.Embed:
+            await ctx.respond(embed=uuid)
             return
+        else:
+            uuid = uuid['id']
         async with aiosqlite.connect('SGdatabase.sqlite') as db:
             async with db.execute(f"SELECT * FROM sgutilsdb WHERE discord_id = ?", (ctx.author.id,)) as cursor:
                 async for row in cursor:
