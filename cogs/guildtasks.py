@@ -1,0 +1,52 @@
+import os
+import sqlite3
+import requests
+from discord.ext import commands, tasks
+
+
+class GuildTasks(commands.Cog):
+    def __init__(self, bot):
+        # self.guildvoicemembercount.start()
+        self.bot = bot
+
+    def cog_unload(self):
+        self.guildvoicemembercount.cancel()
+
+    @tasks.loop(hours=6)
+    async def guildvoicemembercount(self):
+        await self.bot.wait_until_ready()
+        try:
+            conn = sqlite3.connect('SGGuildDB.sqlite')
+            c = conn.cursor()
+            c.execute(f'''SELECT * FROM sgguildutilsdb''')
+            guilds = c.fetchall()
+        except Exception as e:
+            print(e)
+        for guild in guilds:
+            try:
+                if guild[2] is None:
+                    break
+                else:
+                    pass
+                discordid = guild[0]
+                guildid = guild[1]
+                voiceid = guild[2]
+                guild = self.bot.get_guild(discordid)
+                print(guild)
+                guildvoicechannel = guild.get_channel(voiceid)
+                response = requests.get(f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&id={guildid}')
+                if response.status_code != 200:
+                    return
+                data = response.json()
+                if data['success'] == False:
+                    return
+                if data['guild'] is None:
+                    return
+                await guildvoicechannel.edit(name=f'{data["guild"]["name"]} Members: {len(data["guild"]["members"])}')
+                print(f'Updated Voice for {guild}')
+            except Exception as e:
+                print(e)
+
+
+def setup(bot):
+    bot.add_cog(GuildTasks(bot))
