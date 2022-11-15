@@ -27,7 +27,7 @@ async def on_ready():
     c.execute("""CREATE TABLE IF NOT EXISTS sgguildutilsdb (
         discord_guild_id integer PRIMARY KEY,
         skyblock_guild_id text NOT NULL,
-        member_count_channel integer NOT NULL
+        member_count_channel integer
     )""")
     conn.commit()
     conn.close()

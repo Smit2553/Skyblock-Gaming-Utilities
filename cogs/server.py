@@ -144,13 +144,13 @@ class Server(commands.Cog):
                         else:
                             embed.add_field(name='Member Count Channel', value=f'{vc.mention}', inline=False)
                         await ctx.respond(embed=embed)
-                    else:
-                        embed = discord.Embed(title=f'Error',
-                                              description='This server has no config setup. Please use `/guild link` to create a '
-                                                          'config.',
-                                              colour=0xFF0000)
-                        await ctx.respond(embed=embed)
                         return
+                embed = discord.Embed(title=f'Error',
+                                      description='This server has no config setup. Please use `/guild link` to create a '
+                                                  'config.',
+                                      colour=0xFF0000)
+                await ctx.respond(embed=embed)
+                return
 
 
 def setup(bot):
