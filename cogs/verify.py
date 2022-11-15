@@ -38,7 +38,7 @@ class Verify(commands.Cog):
             return
         else:
             uuid = uuid['id']
-        async with aiosqlite.connect('SGdatabase.sqlite') as db:
+        async with aiosqlite.connect('database/SGdatabase.sqlite') as db:
             async with db.execute(f"SELECT * FROM sgutilsdb WHERE discord_id = ?", (ctx.author.id,)) as cursor:
                 async for row in cursor:
                     if row is not None:
@@ -84,7 +84,7 @@ class Verify(commands.Cog):
 
     @discord.slash_command(description='Removes user from our verification database')
     async def unverify(self, ctx):
-        async with aiosqlite.connect('SGdatabase.sqlite') as db:
+        async with aiosqlite.connect('database/SGdatabase.sqlite') as db:
             await db.execute("DELETE FROM sgutilsdb WHERE discord_id = ?", (ctx.author.id,))
             await db.commit()
             embed = discord.Embed(title=f'Verification',

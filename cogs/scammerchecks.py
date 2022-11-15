@@ -34,7 +34,7 @@ class ScammerCheck(commands.Cog):
             await ctx.respond(embed=mojangresponse)
             return
         uuid = mojangresponse["id"]
-        async with aiosqlite.connect('SGScammer.sqlite') as db:
+        async with aiosqlite.connect('database/SGScammer.sqlite') as db:
             async with db.execute("SELECT * FROM sgscammerdb WHERE minecraftuuid = ? AND discord_guild_id = ?",
                                   (uuid, ctx.guild.id)) as cursor:
                 async for row in cursor:
@@ -116,7 +116,7 @@ class ScammerCheck(commands.Cog):
             scammercheck = False
             scammers = []
             reasons = []
-            async with aiosqlite.connect('SGScammer.sqlite') as db:
+            async with aiosqlite.connect('database/SGScammer.sqlite') as db:
                 for member in data['guild']['members']:
                     async with db.execute("SELECT * FROM sgscammerdb WHERE minecraftuuid = ? AND discord_guild_id = ?",
                                           (member['uuid'], ctx.guild.id)) as cursor:

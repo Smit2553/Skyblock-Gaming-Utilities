@@ -36,7 +36,7 @@ class Server(commands.Cog):
             await ctx.respond(embed=embed)
             return
         uuid = data['id']
-        async with aiosqlite.connect('SGScammer.sqlite') as db:
+        async with aiosqlite.connect('database/SGScammer.sqlite') as db:
             async with db.execute(
                     "SELECT * FROM sgscammerdb WHERE minecraftuuid = ? AND discord_guild_id = ?", (uuid, ctx.guild.id)) as cursor:
                 async for row in cursor:
@@ -77,7 +77,7 @@ class Server(commands.Cog):
             await ctx.respond(embed=embed)
             return
         uuid = data['id']
-        async with aiosqlite.connect('SGScammer.sqlite') as db:
+        async with aiosqlite.connect('database/SGScammer.sqlite') as db:
             await db.execute("DELETE FROM sgscammerdb WHERE minecraftuuid = ? AND discord_guild_id = ?",
                              (uuid, ctx.guild.id))
             await db.commit()
@@ -94,7 +94,7 @@ class Server(commands.Cog):
         embed = discord.Embed(title=f'Server Blacklist',
                               description=f'**{ctx.guild.name}** has server specific scammers!',
                               colour=0xFF0000)
-        async with aiosqlite.connect('SGScammer.sqlite') as db:
+        async with aiosqlite.connect('database/SGScammer.sqlite') as db:
             async with db.execute(f"SELECT * FROM sgscammerdb WHERE discord_guild_id = '{ctx.guild.id}'") as cursor:
                 async for row in cursor:
                     if row is not None:
@@ -121,7 +121,7 @@ class Server(commands.Cog):
 
     @server.command(description="View the server's configuration")
     async def config(self, ctx):
-        async with aiosqlite.connect('SGGuildDB.sqlite') as db:
+        async with aiosqlite.connect('database/SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
                 async for row in cursor:
                     if row is not None:

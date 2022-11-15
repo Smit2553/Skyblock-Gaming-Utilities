@@ -46,7 +46,7 @@ class GuildFeatures(commands.Cog):
             return
         guilduuid = data['guild']['_id']
         guild = data['guild']['name']
-        async with aiosqlite.connect('SGGuildDB.sqlite') as db:
+        async with aiosqlite.connect('database/SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
                 async for row in cursor:
                     if row is not None:
@@ -70,7 +70,7 @@ class GuildFeatures(commands.Cog):
     @guild.command(description="Unlink a guild from the server")
     @commands.has_permissions(administrator=True)
     async def unlink(self, ctx):
-        async with aiosqlite.connect('SGGuildDB.sqlite') as db:
+        async with aiosqlite.connect('database/SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
                 async for row in cursor:
                     if row is not None:
@@ -95,7 +95,7 @@ class GuildFeatures(commands.Cog):
         type=discord.VoiceChannel)
     @commands.has_permissions(administrator=True)
     async def setcountvc(self, ctx, channel):
-        async with aiosqlite.connect('SGGuildDB.sqlite') as db:
+        async with aiosqlite.connect('database/SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
                 async for row in cursor:
                     if row is not None:

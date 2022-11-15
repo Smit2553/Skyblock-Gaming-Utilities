@@ -14,7 +14,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="/bugreport | Double "
                                                                                                 "the features square"
                                                                                                 " the bugs!"))
-    conn = sqlite3.connect('SGdatabase.sqlite')
+    conn = sqlite3.connect('database/SGdatabase.sqlite')
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS sgutilsdb (
         discord_id integer PRIMARY KEY,
@@ -22,7 +22,7 @@ async def on_ready():
     )""")
     conn.commit()
     conn.close()
-    conn = sqlite3.connect('SGGuildDB.sqlite')
+    conn = sqlite3.connect('database/SGGuildDB.sqlite')
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS sgguildutilsdb (
         discord_guild_id integer PRIMARY KEY,
@@ -31,7 +31,7 @@ async def on_ready():
     )""")
     conn.commit()
     conn.close()
-    conn = sqlite3.connect('SGScammer.sqlite')
+    conn = sqlite3.connect('database/SGScammer.sqlite')
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS sgscammerdb (
             discord_guild_id integer,
