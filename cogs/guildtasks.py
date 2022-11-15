@@ -17,7 +17,7 @@ class GuildTasks(commands.Cog):
     async def guildvoicemembercount(self):
         await self.bot.wait_until_ready()
         try:
-            conn = sqlite3.connect('SGGuildDB.sqlite')
+            conn = sqlite3.connect('database/SGGuildDB.sqlite')
             c = conn.cursor()
             c.execute(f'''SELECT * FROM sgguildutilsdb''')
             guilds = c.fetchall()
