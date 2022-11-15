@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import requests
 import requests_cache
+from aiohttp_client_cache import CachedSession, SQLiteBackend
 from discord.commands import SlashCommandGroup
 from discord import option
 import os
@@ -21,17 +22,22 @@ class GuildFeatures(commands.Cog):
         description="Guild Name",
         required=True
     )
+    @commands.has_permissions(administrator=True)
     async def link(self, ctx, guild):
 
-        response = requests.get(f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&name={guild}')
-        if response.status_code != 200:
+        async with CachedSession(cache=SQLiteBackend('guild_cache', expires_after=300)) as session:
+            response = await session.get(f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&name={guild}')
+
+        if response.status != 200:
             embed = discord.Embed(title=f'Error',
                                   description='Error fetching information from the API. Try again later',
                                   colour=0xFF0000)
             await ctx.respond(embed=embed)
             return
-        data = response.json()
-        if data['success'] == False:
+
+        data = await response.json()
+
+        if data['success'] is False:
             embed = discord.Embed(title=f'Error',
                                   description='Error fetching information from the API. Try again later',
                                   colour=0xFF0000)
@@ -43,30 +49,36 @@ class GuildFeatures(commands.Cog):
                                   colour=0xFF0000)
             await ctx.respond(embed=embed)
             return
-        guilduuid = data['guild']['_id']
+
+        guild_uuid = data['guild']['_id']
         guild = data['guild']['name']
+
         async with aiosqlite.connect('SGGuildDB.sqlite') as db:
-            async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
-                async for row in cursor:
-                    if row is not None:
-                        embed = discord.Embed(title=f'Error',
-                                              description='A guild already linked to this server. \nUse `/guild unlink` to unlink '
-                                                          'the '
-                                                          'guild. If you are trying to link multiple guilds, please join the '
-                                                          'support server in my About Me and wait for the '
-                                                          'announcement stating '
-                                                          'that this feature has been introduced.',
-                                              colour=0xFF0000)
-                        await ctx.respond(embed=embed)
-                        return
-                await db.execute(f'''INSERT INTO sgguildutilsdb VALUES (?, ?, ?)''', (ctx.guild.id, guilduuid, None))
-                await db.commit()
-                embed = discord.Embed(title=f'Guild Linked!',
-                                      description=f'**{guild}** has been linked to this server.',
-                                      colour=0xee6940)
+            cursor: aiosqlite.Cursor = await db.cursor()
+            await cursor.execute("SELECT 1 FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,))
+            res = await cursor.fetchone()
+
+            if res[0] is not None:
+                embed = discord.Embed(title=f'Error',
+                                      description='A guild already linked to this server. \n'
+                                                  'Use `/guild unlink` to unlink the guild. '
+                                                  'If you are trying to link multiple guilds, please join the '
+                                                  'support server in my About Me and wait for the '
+                                                  'announcement stating '
+                                                  'that this feature has been introduced.',
+                                      colour=0xFF0000)
                 await ctx.respond(embed=embed)
+                return
+
+            await db.execute(f'''INSERT INTO sgguildutilsdb VALUES (?, ?, ?)''', (ctx.guild.id, guild_uuid, None))
+            await db.commit()
+            embed = discord.Embed(title=f'Guild Linked!',
+                                  description=f'**{guild}** has been linked to this server.',
+                                  colour=0xee6940)
+            await ctx.respond(embed=embed)
 
     @guild.command(description="Unlink a guild from the server")
+    @commands.has_permissions(administrator=True)
     async def unlink(self, ctx):
         async with aiosqlite.connect('SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
@@ -91,6 +103,7 @@ class GuildFeatures(commands.Cog):
         description="Channel to set",
         required=True,
         type=discord.VoiceChannel)
+    @commands.has_permissions(administrator=True)
     async def setcountvc(self, ctx, channel):
         async with aiosqlite.connect('SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
@@ -107,10 +120,12 @@ class GuildFeatures(commands.Cog):
                         if response.status_code != 200:
                             return
                         data = response.json()
-                        if data['success'] == False:
+
+                        if data['success'] is False:
                             return
                         if data['guild'] is None:
                             return
+
                         await channel.edit(name=f'{data["guild"]["name"]} Members: {len(data["guild"]["members"])}')
                         print(f'Updated Voice for {ctx.guild}')
                         return
