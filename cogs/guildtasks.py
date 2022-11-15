@@ -23,6 +23,11 @@ class GuildTasks(commands.Cog):
             guilds = c.fetchall()
         except Exception as e:
             print(e)
+        try:
+            tempcheck = guilds
+        except Exception as e:
+            print(e)
+            return
         for guild in guilds:
             try:
                 if guild[2] is None:

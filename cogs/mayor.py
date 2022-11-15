@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ext.pages import Paginator, Page
 from aiohttp_client_cache import CachedSession, SQLiteBackend
 
+
 class Mayor(commands.Cog):
 
     def __init__(self, bot):
