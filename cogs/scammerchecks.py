@@ -1,12 +1,10 @@
 import discord
 from discord.ext import commands
-import requests
 from discord import option
 import os
 from dotenv import load_dotenv
 from discord.commands import SlashCommandGroup
 import requests_cache
-import sqlite3
 from functions import *
 import aiosqlite
 from aiohttp_client_cache import CachedSession, SQLiteBackend

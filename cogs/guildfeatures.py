@@ -22,6 +22,7 @@ class GuildFeatures(commands.Cog):
         description="Guild Name",
         required=True
     )
+    @commands.has_permissions(administrator=True)
     async def link(self, ctx, guild):
 
         async with CachedSession(cache=SQLiteBackend('guild_cache', expires_after=300)) as session:
@@ -77,6 +78,7 @@ class GuildFeatures(commands.Cog):
             await ctx.respond(embed=embed)
 
     @guild.command(description="Unlink a guild from the server")
+    @commands.has_permissions(administrator=True)
     async def unlink(self, ctx):
         async with aiosqlite.connect('SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
@@ -101,6 +103,7 @@ class GuildFeatures(commands.Cog):
         description="Channel to set",
         required=True,
         type=discord.VoiceChannel)
+    @commands.has_permissions(administrator=True)
     async def setcountvc(self, ctx, channel):
         async with aiosqlite.connect('SGGuildDB.sqlite') as db:
             async with db.execute("SELECT * FROM sgguildutilsdb WHERE discord_guild_id = ?", (ctx.guild.id,)) as cursor:
