@@ -1,7 +1,7 @@
 import os
 import sqlite3
-import requests
 from discord.ext import commands, tasks
+from aiohttp_client_cache import CachedSession, SQLiteBackend
 
 
 class GuildTasks(commands.Cog):
@@ -40,16 +40,17 @@ class GuildTasks(commands.Cog):
                 guild = self.bot.get_guild(discordid)
                 print(guild)
                 guildvoicechannel = guild.get_channel(voiceid)
-                response = requests.get(f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&id={guildid}')
-                if response.status_code != 200:
-                    return
-                data = response.json()
-                if data['success'] == False:
-                    return
-                if data['guild'] is None:
-                    return
-                await guildvoicechannel.edit(name=f'{data["guild"]["name"]} Members: {len(data["guild"]["members"])}')
-                print(f'Updated Voice for {guild}')
+                async with CachedSession(cache=SQLiteBackend('database/ign_cache', expires_after=86400)) as session:
+                    response = await session.get(f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&id={guildid}')
+                    if response.status != 200:
+                        return
+                    data = await response.json()
+                    if data['success'] == False:
+                        return
+                    if data['guild'] is None:
+                        return
+                    await guildvoicechannel.edit(name=f'{data["guild"]["name"]} Members: {len(data["guild"]["members"])}')
+                    print(f'Updated Voice for {guild}')
             except Exception as e:
                 print(e)
 
