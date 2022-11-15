@@ -12,6 +12,7 @@ class Mayor(commands.Cog):
     @discord.slash_command(description="Check the current mayor.")
     async def mayor(self, ctx):
         file = None
+
         response = requests.get("https://api.hypixel.net/resources/skyblock/election")
         if response.status_code != 200:
             await ctx.respond("Error fetching information from the API. Try again later", ephemeral=True)

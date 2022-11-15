@@ -2,11 +2,10 @@ import discord
 from discord.ext import commands
 from discord.commands import SlashCommandGroup
 import os
-import requests
 from discord import option
 import aiosqlite
-
-
+from cogs.minecraftfunctions import ign_to_uuid
+from aiohttp_client_cache import CachedSession, SQLiteBackend
 class Server(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -21,14 +20,11 @@ class Server(commands.Cog):
     )
     @commands.has_permissions(ban_members=True)
     async def blacklist(self, ctx, player):
-        response = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{player}')
-        if response.status_code != 200:
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Try again later or check spelling of IGN.',
-                                  colour=0xFF0000)
-            await ctx.respond(embed=embed)
+        response = await ign_to_uuid(player)
+        if isinstance(response, discord.Embed):
+            await ctx.respond(embed=response)
             return
-        data = response.json()
+        data = response
         if data is None:
             embed = discord.Embed(title=f'Error',
                                   description='Error fetching information from the API. Try again later or check spelling of IGN.',
@@ -62,14 +58,11 @@ class Server(commands.Cog):
     )
     @commands.has_permissions(ban_members=True)
     async def whitelist(self, ctx, player):
-        response = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{player}')
-        if response.status_code != 200:
-            embed = discord.Embed(title=f'Error',
-                                  description='Error fetching information from the API. Try again later or check spelling of IGN.',
-                                  colour=0xFF0000)
-            await ctx.respond(embed=embed)
+        response = await ign_to_uuid(player)
+        if isinstance(response, discord.Embed):
+            await ctx.respond(embed=response)
             return
-        data = response.json()
+        data = response
         if data is None:
             embed = discord.Embed(title=f'Error',
                                   description='Error fetching information from the API. Try again later or check spelling of IGN.',
@@ -101,12 +94,18 @@ class Server(commands.Cog):
                         check = True
                         count += 1
                         if count <= 9:
-                            ign = requests.get(f'https://api.mojang.com/user/profile/{row[1]}')
-                            embed.add_field(name=ign.json()['name'], value='Server Blacklisted!', inline=False)
+                            ign = await ign_to_uuid(row[1])
+                            if isinstance(ign, discord.Embed):
+                                await ctx.respond(embed=ign)
+                                break
+                            embed.add_field(name=ign['name'], value='Server Blacklisted!', inline=False)
                         if count > 9:
                             for i in range(9):
-                                ign = requests.get(f'https://api.mojang.com/user/profile/{row[1]}')
-                                embed.add_field(name=ign.json()['name'], value='Server Blacklisted!', inline=False)
+                                ign = await ign_to_uuid(row[1])
+                                if isinstance(ign, discord.Embed):
+                                    await ctx.respond(embed=ign)
+                                    break
+                                embed.add_field(name=ign['name'], value='Server Blacklisted!', inline=False)
                             embed.add_field(name='More Scammers!',
                                             value='This guild has more scammers! Unable to display all of them.',
                                             inline=False)
@@ -128,14 +127,18 @@ class Server(commands.Cog):
                         embed = discord.Embed(title=f'Guild Config',
                                               description=f'**{ctx.guild.name}** has the following config setup!',
                                               colour=0xee6940)
-                        response = requests.get(
-                            f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&&id={row[1]}')
-                        if response.status_code != 200 or response.json()['guild'] is None or response.json()[
-                            'success'] is False:
-                            embed.add_field(name='Linked Guild', value=f'Error Getting Name from API', inline=False)
-                        else:
-                            embed.add_field(name='Linked Guild', value=f'{response.json()["guild"]["name"]}',
-                                            inline=False)
+                        async with CachedSession(
+                                cache=SQLiteBackend('database/ign_cache', expires_after=86400)) as session:
+
+                            response = await session.get(
+                                f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&&id={row[1]}')
+                            data = await response.json()
+                            if response.status != 200 or data['guild'] is None or await data[
+                                'success'] is False:
+                                embed.add_field(name='Linked Guild', value=f'Error Getting Name from API', inline=False)
+                            else:
+                                embed.add_field(name='Linked Guild', value=f'{data["guild"]["name"]}',
+                                                inline=False)
                         vc = self.bot.get_channel(row[2])
                         if vc is None:
                             embed.add_field(name='Member Count Channel',

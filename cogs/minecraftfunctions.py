@@ -1,11 +1,9 @@
-import aiohttp
 import discord
-import aiosqlite
 from aiohttp_client_cache import CachedSession, SQLiteBackend
 
 
 async def ign_to_uuid(ign: str):
-    async with CachedSession(cache=SQLiteBackend('ign_cache', expires_after=86400)) as session:
+    async with CachedSession(cache=SQLiteBackend('database/ign_cache', expires_after=86400)) as session:
         response = await session.get(f'https://api.mojang.com/users/profiles/minecraft/{ign}')
         if response.status != 200:
             embed = discord.Embed(title=f'Error',
@@ -15,6 +13,7 @@ async def ign_to_uuid(ign: str):
             return embed
         data = await response.json()
         try:
+            temp = data['id']
             return data
         except Exception as err:
             print(err)
@@ -26,7 +25,7 @@ async def ign_to_uuid(ign: str):
 
 
 async def uuid_to_ign(uuid):
-    async with CachedSession(cache=SQLiteBackend('ign_cache', expires_after=86400)) as session:
+    async with CachedSession(cache=SQLiteBackend('database/ign_cache', expires_after=86400)) as session:
         response = await session.get(f'https://api.mojang.com/user/profile/{uuid}')
         if response.status != 200:
             embed = discord.Embed(title=f'Error',

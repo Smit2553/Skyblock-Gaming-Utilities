@@ -4,16 +4,23 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from discord import option
 import sqlite3
+
 load_dotenv()
 
-bot = discord.Bot(debug_guilds=[int(os.getenv("DEBUG_GUILD"))])
+if os.getenv("DEBUGMODE") == "True":
+    bot = discord.Bot(debug_guilds=[int(os.getenv("DEBUG_GUILD"))])
+    print("Bot is running in debug mode. Change DEBUGMODE to False in .env to disable debug mode.")
+else:
+    bot = discord.Bot()
 
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="/bugreport | Double "
-                                                                                                "the features square"
-                                                                                                " the bugs!"))
+    if os.getenv("DEBUGMODE") != "True":
+        await bot.change_presence(
+            activity=discord.Activity(type=discord.ActivityType.watching, name="/bugreport | Double "
+                                                                               "the features square"
+                                                                               " the bugs!"))
     conn = sqlite3.connect('database/SGdatabase.sqlite')
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS sgutilsdb (
@@ -44,7 +51,7 @@ async def on_ready():
 
 
 for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
+    if filename.endswith('.py') and filename != 'minecraftfunctions.py':
         try:
             bot.load_extension(f'cogs.{filename[:-3]}')
             print(f"Loaded {filename}")
@@ -56,18 +63,20 @@ for filename in os.listdir('./cogs'):
 async def ping(ctx):
     await ctx.respond(f"Pong! {bot.latency * 1000:.2f}ms")
 
+
 @bot.event
 async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.respond(f"{error}")
     elif isinstance(error, commands.NotOwner):
-        await ctx.respond("This command is for owners only!")
+        await ctx.respond("This command is for bot owners only!")
     elif isinstance(error, commands.MissingPermissions):
         await ctx.respond(error)
     else:
         raise error
 
-owner = bot.create_group("owner", "Owner Commands", guild_ids=[int(os.getenv('DEBUG_GUILD'))])
+
+owner = bot.create_group("owner", "Owner Commands")
 
 
 @owner.command(description="Reload all cogs.")
@@ -100,7 +109,10 @@ async def load(ctx, extension):
     bot.load_extension(f'cogs.{extension}')
     await ctx.respond("Loaded")
 
+
 @bot.event
 async def on_guild_join(guild):
     print(f"Joined {guild.name} ({guild.id})")
+
+
 bot.run(os.getenv("TOKEN"))

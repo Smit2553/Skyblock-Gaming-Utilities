@@ -1,10 +1,8 @@
 import os
-import discord
 import requests
 from discord.ext import commands
 from discord import option
-import aiosqlite
-from functions import *
+from cogs.minecraftfunctions import *
 
 
 class Verify(commands.Cog):

@@ -6,7 +6,8 @@ from discord.ext import commands, tasks
 
 class GuildTasks(commands.Cog):
     def __init__(self, bot):
-        # self.guildvoicemembercount.start()
+        if os.getenv("DEBUGMODE") != "True":
+            self.guildvoicemembercount.start()
         self.bot = bot
 
     def cog_unload(self):

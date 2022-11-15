@@ -1,11 +1,9 @@
-import discord
 from discord.ext import commands
 from discord import option
 import os
 from dotenv import load_dotenv
 from discord.commands import SlashCommandGroup
-import requests_cache
-from functions import *
+from cogs.minecraftfunctions import *
 import aiosqlite
 from aiohttp_client_cache import CachedSession, SQLiteBackend
 
@@ -18,7 +16,6 @@ class ScammerCheck(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         load_dotenv()
-        requests_cache.install_cache('scammer_cache', backend='sqlite', expire_after=600)
 
     scammer = SlashCommandGroup("scammer", "Scammer checks for Hypixel Skyblock")
 
@@ -46,7 +43,7 @@ class ScammerCheck(commands.Cog):
                         embed.set_thumbnail(url=f'https://crafatar.com/renders/head/{uuid}')
                         await ctx.respond(embed=embed)
                         return
-        async with CachedSession(cache=SQLiteBackend('ign_cache', expires_after=600)) as session:
+        async with CachedSession(cache=SQLiteBackend('database/ign_cache', expires_after=600)) as session:
             response = await session.get(f'https://skykings.net/api/lookup/?key={os.getenv("SKYKINGSKEY")}&uuid={uuid}')
             if response.status != 200:
                 embed = discord.Embed(title=f'Error',
@@ -90,7 +87,7 @@ class ScammerCheck(commands.Cog):
     )
     async def guild(self, ctx, guild):
         await ctx.defer()
-        async with CachedSession(cache=SQLiteBackend('guild_cache', expires_after=600)) as session:
+        async with CachedSession(cache=SQLiteBackend('database/ign_cache', expires_after=600)) as session:
             response = await session.get(f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&name={guild}')
             if response.status != 200:
                 embed = discord.Embed(title=f'Error',
@@ -143,7 +140,7 @@ class ScammerCheck(commands.Cog):
             skykingsapi = os.getenv("SKYKINGSKEY")
             for chunks in x:
                 lookupstring = ",".join(chunks)
-                async with CachedSession(cache=SQLiteBackend('scammer_cache', expires_after=600)) as session:
+                async with CachedSession(cache=SQLiteBackend('database/ign_cache', expires_after=600)) as session:
                     response = await session.get(
                         f'https://skykings.net/api/lookup/bulk?key={skykingsapi}&uuids={lookupstring}')
                     if response.status != 200:
