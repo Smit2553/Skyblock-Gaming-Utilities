@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
-import requests
 from discord.ext.pages import Paginator, Page
-
+from aiohttp_client_cache import CachedSession, SQLiteBackend
 
 class Mayor(commands.Cog):
 
@@ -12,12 +11,12 @@ class Mayor(commands.Cog):
     @discord.slash_command(description="Check the current mayor.")
     async def mayor(self, ctx):
         file = None
-
-        response = requests.get("https://api.hypixel.net/resources/skyblock/election")
-        if response.status_code != 200:
+        async with CachedSession(cache=SQLiteBackend('database/election_cache', expires_after=600)) as session:
+            response = await session.get("https://api.hypixel.net/resources/skyblock/election")
+        if response.status != 200:
             await ctx.respond("Error fetching information from the API. Try again later", ephemeral=True)
             return
-        data = response.json()
+        data = await response.json()
         if not data["success"]:
             await ctx.respond("Error fetching information from the API. Try again later", ephemeral=True)
             return
@@ -41,11 +40,12 @@ class Mayor(commands.Cog):
 
     @discord.slash_command(description="Check the results of the current mayoral elections.")
     async def election(self, ctx):
-        response = requests.get("https://api.hypixel.net/resources/skyblock/election")
-        if response.status_code != 200:
+        async with CachedSession(cache=SQLiteBackend('database/election_cache', expires_after=600)) as session:
+            response = await session.get("https://api.hypixel.net/resources/skyblock/election")
+        if response.status != 200:
             await ctx.respond("Error fetching information from the API. Try again later", ephemeral=True)
             return
-        data = response.json()
+        data = await response.json()
         if not data["success"]:
             await ctx.respond("Error fetching information from the API. Try again later", ephemeral=True)
             return
