@@ -3,7 +3,7 @@ import requests
 from discord.ext import commands
 from discord import option
 from cogs.minecraftfunctions import *
-
+import aiosqlite
 
 class Verify(commands.Cog):
     def __init__(self, bot):

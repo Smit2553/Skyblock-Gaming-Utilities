@@ -133,7 +133,7 @@ class Server(commands.Cog):
                             response = await session.get(
                                 f'https://api.hypixel.net/guild?key={os.getenv("APIKEY")}&&id={row[1]}')
                             data = await response.json()
-                            if response.status != 200 or data['guild'] is None or await data[
+                            if response.status != 200 or data['guild'] is None or data[
                                 'success'] is False:
                                 embed.add_field(name='Linked Guild', value=f'Error Getting Name from API', inline=False)
                             else:
